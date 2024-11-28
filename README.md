@@ -1,9 +1,9 @@
 Add link video, attach link to demonstration link
 # Assignment 1: Data Pipeline with Docker
 
-Student Name: Do Tung Lam 
-SID: s3963286
-Tutorial Lecturer: Dr. Arthur Tang
+Student Name: Do Tung Lam  \
+SID: s3963286 \
+Tutorial Lecturer: Dr. Arthur Tang \
 
 ## Demonstration Video
 
@@ -12,7 +12,7 @@ Tutorial Lecturer: Dr. Arthur Tang
 # Step-by-step Instruction
 
 ## API used for Task 3: Alpha Vantage API
-Website: https://www.alphavantage.co/support/#api-key
+Website: https://www.alphavantage.co/support/#api-key \
 Alpha Vantage is a leading provider of free APIs offering real-time and historical financial market data across various asset classes, including stocks, forex, and cryptocurrencies. Their APIs are designed to be developer-friendly, providing data in JSON and CSV formats.
 
 **Feature**: 
@@ -61,7 +61,7 @@ For **Task 3**, to fetch the stock price data, I utilized the feature **Stock Ti
 Currently, in this file there has already been sample APIs that I use during my demonstration. 
 However, in case the API's limits are exceeded, you should create your own API from below links with its publicity and free access.
 
-OpenWeatherMap API: https://home.openweathermap.org/api_keys
+OpenWeatherMap API: https://home.openweathermap.org/api_keys \
 Alpha Vantage API: https://www.alphavantage.co/support/#api-key
 
 After obtaining the API keys, please update the files "alphav-producer/alphav_service.cfg" and "owm-producer/openweathermap_service.cfg" accordingly.
