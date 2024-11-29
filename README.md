@@ -11,65 +11,54 @@ Tutorial Lecturer: Dr. Arthur Tang \
 
 # Step-by-step Instruction
 
-## API used for Task 3: Alpha Vantage API
-Website: https://www.alphavantage.co/support/#api-key \
-Alpha Vantage is a leading provider of free APIs offering real-time and historical financial market data across various asset classes, including stocks, forex, and cryptocurrencies. Their APIs are designed to be developer-friendly, providing data in JSON and CSV formats.
+## API used for Task 3: Gemini API
+Website: https://docs.gemini.com/rest-api/#ticker \
+The Gemini REST API provides both public and private endpoints to interact with the Gemini Exchange. Public endpoints offer access to market data, while private endpoints enable account management and order execution.
 
-**Feature**: 
-- **Stock Time Series Data**: Access global equity data with multiple temporal resolutions—intraday, daily, weekly, and monthly—spanning over 20 years of historical data.
+**Public REST APIs Feature**: 
+- Accessing the current order book, which provides a detailed view of market depth and liquidity.
+- Retrieving recent trading activity, enabling users to analyze the most up-to-date market movements.
+- Viewing the trade history, which offers a comprehensive record of past transactions for deeper market analysis.
 
-- **Foreign Exchange (Forex) Data**: Retrieve real-time and historical forex rates for major currency pairs.
+**Private REST APIs Feature**: 
+- The ability to place and cancel orders, ensuring precise control over trading activity.
+- Viewing a list of active orders, allowing users to track their open positions and manage risk effectively.
+- Accessing a detailed record of trading history and trade volume, which is critical for performance analysis and compliance reporting.
+- Retrieving available balances, enabling users to monitor account funds and make informed decisions about trading and fund transfers.
 
-- **Cryptocurrency Data**: Obtain data on various digital currencies, including Bitcoin, Ethereum, and others.
+For **Task 3**, to fetch the real, I utilized the feature **Public APIs - Ticker** which retrieves real-time data about recent trading activity for the symbol.
 
-- **Technical Indicators**: Utilize over 50 technical indicators for in-depth market analysis.
-
-- **Fundamental Data**: Access detailed company information, including earnings, balance sheets, and cash flow statements.
-
-For **Task 3**, to fetch the stock price data, I utilized the feature **Stock Time Series Data** for intraday period to get the lastest stock price data. The intraday data (including 20+ years of historical data) is updated at the end of each trading day for all users by default.
-
-
-**Examle Output**:
+**Examle Output of Public APIs - Ticker**:
 ```bash
 {
-    "Time Series (5min)": {
-        "2024-11-27 18:50:00": {
-            "1. open": "226.9200",
-            "2. high": "226.9200",
-            "3. low": "226.9200",
-            "4. close": "226.9200",
-            "5. volume": "25"
-        },
-        "2024-11-27 18:40:00": {
-            "1. open": "227.2750",
-            "2. high": "227.2750",
-            "3. low": "227.2750",
-            "4. close": "227.2750",
-            "5. volume": "4"
-        },
+    "ask": "977.59",
+    "bid": "977.35",
+    "last": "977.65",
+    "volume": {
+        "BTC": "2210.505328803",
+        "USD": "2135477.463379586263",
+        "timestamp": 1483018200000
     }
 }
 ```
-- **Time Series (5min)**: The main dataset containing stock price and volume data for each interval.
-- **1. open**: Opening price of the stock at the given interval.
-- **2. high**: Highest price of the stock during the interval.
-- **3. low**: Lowest price of the stock during the interval.
-- **4. close**: Closing price of the stock at the end of the interval.
-- **5. volume**: Number of shares traded during the interval.
+- **ask**: The lowest ask currently available.
+- **bid**: The highest bid currently available.
+- **last**: The price of the last executed trade.
+- **volume**: Information about the 24 hour volume on the exchange. See below.
 
 ## API Set up
 Currently, in this file there has already been sample APIs that I use during my demonstration. 
 However, in case the API's limits are exceeded, you should create your own API from below links with its publicity and free access.
 
-OpenWeatherMap API: https://home.openweathermap.org/api_keys \
-Alpha Vantage API: https://www.alphavantage.co/support/#api-key
+- OpenWeatherMap API: https://home.openweathermap.org/api_keys \
+- Gemini API (don't require API keys to use feature ticker): https://docs.gemini.com/rest-api/#ticker
 
-After obtaining the API keys, please update the files "alphav-producer/alphav_service.cfg" and "owm-producer/openweathermap_service.cfg" accordingly.
+After obtaining the API keys, please update the files "owm-producer/openweathermap_service.cfg" accordingly.
 
 > **Note:** 
 For dock-compose up command, I will add option --build to re-create the container in case it cached the old data. Remove it won't affect your results if you haven't had any similar container before.
 
-# Create docker networks
+## Create docker networks
 ```bash
 $ docker network create kafka-network                         # create a new docker network for kafka cluster (zookeeper, broker, kafka-manager services, and kafka connect sink services)
 $ docker network create cassandra-network                     # create a new docker network for cassandra. (kafka connect will exist on this network as well in addition to kafka-network)
@@ -105,15 +94,21 @@ You can use it to create cluster to view the topics streaming in Kafka (for bett
 - Check box Enable Active OffsetCache (Not recommended for large # of consumers)
 - Click Save. After this, you should see 7 topics have been connected.
 
+Note: You can also check the sinks have been created by running:
+```bash
+$ curl -X GET http://localhost:8083/connectors
+```
+If the sinks is empty, try running this command within kafka-connect Docker CLI
+```bash
+$ .\start-and-wait.sh
+```
 
 ## Starting Producers
 ```bash
 $ docker-compose -f owm-producer/docker-compose.yml up -d --build    # start the producer that retrieves open weather map
 $ docker-compose -f faker-producer/docker-compose.yml up -d --build     # start the producer for faker data
-$ docker-compose -f alphav-producer/docker-compose.yml up -d --build    # start the producer for faker data
+$ docker-compose -f gemini-producer/docker-compose.yml up -d --build    # start the producer for gemini data
 ```
-> **Note:** 
-As Alpha Vantage detect fetch rate based on the IP Address where you call, which means that no matter the API key you use, if you still at the same IP Address that exceed the limit, you won't be able to fetch new data. For this, you can change your IP Address using VPN (ex. 1.1.1.1).
 
 ## Check that data is arriving to Cassandra
 
@@ -134,7 +129,7 @@ cqlsh:kafkapipeline> select * from fakerdata;
 cqlsh:kafkapipeline> select * from alphavdata;
 ```
 
-And that's it! you should be seeing records coming in to Cassandra
+And that's it! you should be seeing records coming in to Cassandra.
 
 
 ## Visualization
@@ -142,41 +137,8 @@ And that's it! you should be seeing records coming in to Cassandra
 Run the following command the go to http://localhost:8888 and run the visualization notebook accordingly
 
 ```
-docker-compose -f data-vis/docker-compose.yml up -d
+docker-compose -f data-vis/docker-compose.yml up -d --build
 ```
 
-## Pipeline Teardown
-
-To stop all running kakfa cluster services
-
-```bash
-$ docker-compose -f data-vis/docker-compose.yml down # stop visualization node
-
-$ docker-compose -f owm-producer/docker-compose.yml down       # stop open weather map producer
-
-$ docker-compose -f faker-producer/docker-compose.yml down       # stop open faker producer
-$ docker-compose -f alphav-producer/docker-compose.yml down       # stop open alpha vantage producer
-
-$ docker-compose -f kafka/docker-compose.yml down              # stop zookeeper, broker, kafka-manager and kafka-connect services
-
-$ docker-compose -f cassandra/docker-compose.yml down          # stop Cassandra
-```
-
-To remove the kafka-network network:
-
-```bash
-$ docker network rm kafka-network
-$ docker network rm cassandra-network
-```
-
-To remove resources in Docker
-
-```bash
-$ docker container prune # remove stopped containers, done with the docker-compose down
-$ docker volume prune # remove all dangling volumes (delete all data from your Kafka and Cassandra)
-$ docker image prune -a # remove all images (help with rebuild images)
-$ docker builder prune # remove all build cache (you have to pull data again in the next build)
-$ docker system prune -a # basically remove everything
-```
 
 
